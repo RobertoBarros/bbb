@@ -1,6 +1,12 @@
 <% content_for :title, "Votação online" %>
 
 <div class="w-full pb-20">
+  <% if notice %>
+    <div class="mb-10 border-y border-smart-blue-500 bg-smart-blue-900 px-4 py-4 font-medium text-prussian-blue-dark" role="status" data-flash="notice">
+      <%= notice %>
+    </div>
+  <% end %>
+
   <header class="mb-12 max-w-3xl md:mb-16">
     <p class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-smart-blue-500">
       Plataforma de votação
@@ -41,7 +47,7 @@
           </div>
         </div>
 
-        <%= link_to "Votar agora", "#", class: "inline-flex min-h-12 items-center justify-center rounded-full bg-smart-blue-600 px-6 py-3 font-semibold text-prussian-blue-dark transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-smart-blue-700 active:translate-y-px" %>
+        <%= link_to "Votar agora", election_path(@open_election), class: "inline-flex min-h-12 items-center justify-center rounded-full bg-smart-blue-600 px-6 py-3 font-semibold text-prussian-blue-dark transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-smart-blue-700 active:translate-y-px" %>
       </article>
     <% else %>
       <div class="border-y border-lavender-grey-800 py-10 text-blue-slate-500" data-empty-state="open">

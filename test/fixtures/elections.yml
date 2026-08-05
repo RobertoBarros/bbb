@@ -1,0 +1,15 @@
+pending:
+  title: Votação pendente
+  status: pending
+
+open:
+  title: Votação aberta
+  status: open
+
+second_open:
+  title: Segunda votação aberta
+  status: open
+
+closed:
+  title: Votação encerrada
+  status: closed

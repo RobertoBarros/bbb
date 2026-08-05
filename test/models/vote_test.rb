@@ -9,7 +9,7 @@ class VoteTest < ActiveSupport::TestCase
   end
 
   test "allows multiple anonymous votes for the same candidacy" do
-    candidacy = create_candidacy
+    candidacy = candidacies(:open_maria)
 
     assert_difference -> { candidacy.votes.count }, 2 do
       Vote.create!(candidacy:)
@@ -18,24 +18,29 @@ class VoteTest < ActiveSupport::TestCase
   end
 
   test "keeps votes isolated between elections" do
-    candidate = Candidate.create!(name: "Alice")
-    first_election = Election.create!(title: "Board election")
-    second_election = Election.create!(title: "Council election")
-    first_candidacy = Candidacy.create!(election: first_election, candidate:)
-    second_candidacy = Candidacy.create!(election: second_election, candidate:)
-    first_vote = Vote.create!(candidacy: first_candidacy)
-    Vote.create!(candidacy: second_candidacy)
+    first_election = elections(:open)
+    second_election = elections(:second_open)
+    first_vote = votes(:open_maria)
 
     assert_equal [ first_vote ], first_election.votes.to_a
     assert_equal 1, second_election.votes.count
   end
 
-  private
+  test "rejects votes for unavailable elections" do
+    %i[pending_joao closed_ana].each do |fixture_name|
+      candidacy = candidacies(fixture_name)
+      vote = Vote.new(candidacy:)
 
-    def create_candidacy
-      election = Election.create!(title: "Board election")
-      candidate = Candidate.create!(name: "Alice")
-
-      Candidacy.create!(election:, candidate:)
+      assert_not vote.valid?
+      assert_includes vote.errors[:base], "Esta votação não está aberta."
     end
+  end
+
+  test "preserves a vote after its election closes" do
+    vote = votes(:open_maria)
+
+    vote.candidacy.election.closed!
+
+    assert_predicate vote, :valid?
+  end
 end

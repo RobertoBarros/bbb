@@ -20,7 +20,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Vote de forma simples e anônima."
     assert_select "[data-election='open'] [data-election-title]", @open_election.title
     assert_select "[data-election='open'] [data-candidate]", @open_candidate.name
-    assert_select "[data-election='open'] a[href='#']", "Votar agora"
+    assert_select "[data-election='open'] a[href=?]", election_path(@open_election), text: "Votar agora"
     assert_select "[data-election='closed'] [data-election-title]", @closed_election.title
     assert_select "[data-election='closed'] [data-candidate]", @closed_candidate.name
     assert_select "[data-election='closed'] a[href='#']", "Ver resultados"

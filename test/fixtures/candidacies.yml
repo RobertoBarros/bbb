@@ -1,0 +1,15 @@
+open_maria:
+  election: open
+  candidate: maria
+
+second_open_joao:
+  election: second_open
+  candidate: joao
+
+pending_joao:
+  election: pending
+  candidate: joao
+
+closed_ana:
+  election: closed
+  candidate: ana

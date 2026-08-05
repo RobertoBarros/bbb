@@ -9,7 +9,7 @@ class ElectionTest < ActiveSupport::TestCase
   end
 
   test "supports pending, open, and closed statuses" do
-    election = Election.create!(title: "Board election")
+    election = elections(:pending)
 
     election.open!
     assert_predicate election, :open?

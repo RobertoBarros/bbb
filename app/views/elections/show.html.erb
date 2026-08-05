@@ -1,0 +1,76 @@
+<% content_for :title, @election.title %>
+
+<div class="w-full pb-20">
+  <%= link_to "Voltar para a página inicial", root_path, class: "inline-flex text-sm font-semibold text-smart-blue-500 underline decoration-smart-blue-500/30 underline-offset-4 transition duration-200 hover:text-sapphire-500 hover:decoration-sapphire-500" %>
+
+  <header class="mt-10 max-w-3xl">
+    <p class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-smart-blue-500" data-election-status>
+      <% if @election.open? %>
+        Votação aberta
+      <% elsif @election.closed? %>
+        Votação encerrada
+      <% else %>
+        Votação pendente
+      <% end %>
+    </p>
+    <h1 class="text-4xl font-semibold leading-none tracking-tight text-prussian-blue-dark md:text-6xl">
+      <%= @election.title %>
+    </h1>
+  </header>
+
+  <% if alert %>
+    <div class="mt-8 border-y border-smart-blue-500 bg-smart-blue-900 px-4 py-4 font-medium text-prussian-blue-dark" role="alert" data-flash="alert">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <section class="mt-12 md:mt-16" aria-labelledby="candidates-heading">
+    <div class="mb-6 max-w-2xl">
+      <h2 id="candidates-heading" class="text-2xl font-semibold tracking-tight text-prussian-blue-dark md:text-3xl">
+        Candidatos
+      </h2>
+      <p class="mt-2 text-base leading-relaxed text-blue-slate-500">
+        <% if @election.open? %>
+          Selecione uma opção. Seu voto será registrado sem identificação.
+        <% elsif @election.closed? %>
+          Esta votação foi encerrada e não recebe novos votos.
+        <% else %>
+          Esta votação ainda não está aberta.
+        <% end %>
+      </p>
+    </div>
+
+    <% if @candidacies.any? %>
+      <% if @election.open? %>
+        <%= form_with url: election_votes_path(@election), scope: :vote, class: "max-w-3xl", data: { voting_form: true } do |form| %>
+          <fieldset>
+            <legend class="sr-only">Escolha um candidato</legend>
+
+            <div class="divide-y divide-lavender-grey-800 border-y border-lavender-grey-800">
+              <% @candidacies.each do |candidacy| %>
+                <label class="grid cursor-pointer grid-cols-[auto_1fr] items-center gap-4 py-5 text-prussian-blue-dark transition duration-200 hover:text-smart-blue-500" data-candidate-option>
+                  <%= form.radio_button :candidacy_id, candidacy.id, required: true, class: "h-5 w-5 accent-smart-blue-500" %>
+                  <span class="text-lg font-medium"><%= candidacy.candidate.name %></span>
+                </label>
+              <% end %>
+            </div>
+          </fieldset>
+
+          <%= form.submit "Confirmar voto", class: "mt-8 min-h-12 cursor-pointer rounded-full bg-smart-blue-600 px-7 py-3 font-semibold text-prussian-blue-dark transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-smart-blue-700 active:translate-y-px" %>
+        <% end %>
+      <% else %>
+        <ul class="max-w-3xl divide-y divide-lavender-grey-800 border-y border-lavender-grey-800" data-candidate-list>
+          <% @candidacies.each do |candidacy| %>
+            <li class="py-5 text-lg font-medium text-regal-navy-500" data-candidate>
+              <%= candidacy.candidate.name %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% else %>
+      <div class="border-y border-lavender-grey-800 py-10 text-blue-slate-500" data-empty-state="candidates">
+        Nenhum candidato foi adicionado a esta votação.
+      </div>
+    <% end %>
+  </section>
+</div>

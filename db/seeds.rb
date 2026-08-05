@@ -69,7 +69,9 @@ ApplicationRecord.transaction do
   }
 
   scenarios.each do |title, scenario|
-    election = Election.create!(title:, status: scenario.fetch(:status))
+    status = scenario.fetch(:status)
+    initial_status = status == :closed ? :open : status
+    election = Election.create!(title:, status: initial_status)
 
     scenario.fetch(:results).each do |candidate_name, vote_count|
       candidacy = Candidacy.create!(
@@ -81,5 +83,7 @@ ApplicationRecord.transaction do
         candidacy.votes.create!
       end
     end
+
+    election.closed! if status == :closed
   end
 end
