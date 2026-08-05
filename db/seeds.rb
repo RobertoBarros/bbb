@@ -27,6 +27,30 @@ ApplicationRecord.transaction do
       }
     },
     "votação da semana 2" => {
+      status: :closed,
+      results: {
+        "Ana Souza" => 6,
+        "Carlos Pereira" => 6,
+        "João da Silva" => 3
+      }
+    },
+    "votação da semana 3" => {
+      status: :closed,
+      results: {
+        "Francisca Almeida" => 9,
+        "José dos Santos" => 7,
+        "Maria de Oliveira" => 4
+      }
+    },
+    "votação da semana 4" => {
+      status: :closed,
+      results: {
+        "Carlos Pereira" => 5,
+        "Ana Souza" => 4,
+        "Francisca Almeida" => 2
+      }
+    },
+    "votação da semana 5" => {
       status: :open,
       results: {
         "Ana Souza" => 4,
@@ -34,7 +58,7 @@ ApplicationRecord.transaction do
         "João da Silva" => 1
       }
     },
-    "votação da semana 3" => {
+    "votação da semana 6" => {
       status: :pending,
       results: {
         "Maria de Oliveira" => 0,

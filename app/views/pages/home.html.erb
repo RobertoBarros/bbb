@@ -1,1 +1,83 @@
-<h1>Home</h1>
+<% content_for :title, "Votação online" %>
+
+<div class="w-full pb-20">
+  <header class="mb-12 max-w-3xl md:mb-16">
+    <p class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-smart-blue-500">
+      Plataforma de votação
+    </p>
+    <h1 class="text-4xl font-semibold leading-none tracking-tight text-prussian-blue-dark md:text-6xl">
+      Vote de forma simples e anônima.
+    </h1>
+    <p class="mt-5 max-w-2xl text-base leading-relaxed text-blue-slate-500 md:text-lg">
+      Confira a votação aberta e acompanhe os resultados das eleições encerradas.
+    </p>
+  </header>
+
+  <section aria-labelledby="open-election-heading">
+    <div class="mb-5 flex items-center gap-3">
+      <span class="h-2.5 w-2.5 rounded-full bg-smart-blue-500" aria-hidden="true"></span>
+      <h2 id="open-election-heading" class="text-sm font-semibold uppercase tracking-[0.16em] text-twilight-indigo-500">
+        Votação aberta
+      </h2>
+    </div>
+
+    <% if @open_election %>
+      <article class="grid gap-8 rounded-3xl bg-prussian-blue-dark p-7 text-white shadow-[0_24px_60px_-30px_rgba(0,40,85,0.5)] md:grid-cols-[1fr_auto] md:items-end md:p-10" data-election="open">
+        <div>
+          <p class="mb-3 text-sm font-medium text-smart-blue-800">Recebendo votos agora</p>
+          <h3 class="max-w-2xl text-3xl font-semibold leading-tight tracking-tight md:text-5xl" data-election-title>
+            <%= @open_election.title %>
+          </h3>
+
+          <div class="mt-7">
+            <p class="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-lavender-grey-700">Candidatos</p>
+            <ul class="flex flex-wrap gap-2" aria-label="Candidatos">
+              <% @open_election.candidates.each do |candidate| %>
+                <li class="rounded-full border border-twilight-indigo-500 bg-prussian-blue px-3 py-1.5 text-sm text-lavender-grey-900" data-candidate>
+                  <%= candidate.name %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+
+        <%= link_to "Votar agora", "#", class: "inline-flex min-h-12 items-center justify-center rounded-full bg-smart-blue-600 px-6 py-3 font-semibold text-prussian-blue-dark transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-smart-blue-700 active:translate-y-px" %>
+      </article>
+    <% else %>
+      <div class="border-y border-lavender-grey-800 py-10 text-blue-slate-500" data-empty-state="open">
+        Nenhuma votação aberta no momento.
+      </div>
+    <% end %>
+  </section>
+
+  <section class="mt-16 md:mt-24" aria-labelledby="closed-elections-heading">
+    <div class="mb-5">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-grey-500">Arquivo</p>
+      <h2 id="closed-elections-heading" class="text-2xl font-semibold tracking-tight text-prussian-blue-dark md:text-3xl">
+        Eleições encerradas
+      </h2>
+    </div>
+
+    <% if @closed_elections.any? %>
+      <div class="divide-y divide-lavender-grey-800 border-y border-lavender-grey-800">
+        <% @closed_elections.each do |election| %>
+          <div class="grid gap-4 py-6 md:grid-cols-[1fr_auto] md:items-center" data-election="closed">
+            <div>
+              <h3 class="text-lg font-medium text-regal-navy-500" data-election-title><%= election.title %></h3>
+              <ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-blue-slate-500" aria-label="Candidatos">
+                <% election.candidates.each do |candidate| %>
+                  <li data-candidate><%= candidate.name %></li>
+                <% end %>
+              </ul>
+            </div>
+            <%= link_to "Ver resultados", "#", class: "w-fit font-semibold text-smart-blue-500 underline decoration-smart-blue-500/30 underline-offset-4 transition duration-200 hover:text-sapphire-500 hover:decoration-sapphire-500 active:translate-y-px" %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="border-y border-lavender-grey-800 py-10 text-blue-slate-500" data-empty-state="closed">
+        Nenhum resultado disponível.
+      </div>
+    <% end %>
+  </section>
+</div>
