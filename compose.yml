@@ -1,0 +1,44 @@
+x-app: &app
+  build: .
+  environment:
+    RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?RAILS_MASTER_KEY is required}
+    REDIS_URL: redis://redis:6379/0
+  volumes:
+    - app_storage:/rails/storage
+
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  web:
+    <<: *app
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-3000}:80"
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost/up" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    <<: *app
+    command: bin/jobs
+    depends_on:
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+
+volumes:
+  app_storage:
+  redis_data:
