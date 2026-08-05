@@ -10,5 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 0) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_171932) do
+  create_table "candidacies", force: :cascade do |t|
+    t.integer "candidate_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "election_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["candidate_id"], name: "index_candidacies_on_candidate_id"
+    t.index ["election_id", "candidate_id"], name: "index_candidacies_on_election_id_and_candidate_id", unique: true
+    t.index ["election_id"], name: "index_candidacies_on_election_id"
+  end
+
+  create_table "candidates", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "elections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "votes", force: :cascade do |t|
+    t.integer "candidacy_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["candidacy_id"], name: "index_votes_on_candidacy_id"
+  end
+
+  add_foreign_key "candidacies", "candidates"
+  add_foreign_key "candidacies", "elections"
+  add_foreign_key "votes", "candidacies"
 end
