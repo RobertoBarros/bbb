@@ -23,7 +23,7 @@ class SidekiqTest < ActiveSupport::TestCase
     assert_equal(
       {
         "refresh_election_results" => {
-          "cron" => "*/10 * * * * *",
+          "cron" => "*/5 * * * * *",
           "class" => "RefreshElectionResultsJob",
           "active_job" => true,
           "queue" => "results"
@@ -38,7 +38,7 @@ class SidekiqTest < ActiveSupport::TestCase
 
     job = Sidekiq::Cron::Job.all.find { |cron_job| cron_job.name == CRON_JOB_NAME }
 
-    assert_equal "*/10 * * * * *", job.cron
+    assert_equal "*/5 * * * * *", job.cron
     assert_equal "RefreshElectionResultsJob", job.klass
     assert_equal "results", Sidekiq.load_json(job.message).fetch("queue")
   end

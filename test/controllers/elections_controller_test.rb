@@ -41,4 +41,48 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-empty-state='candidates']", "Nenhum candidato foi adicionado a esta votação."
     assert_select "form[data-voting-form]", count: 0
   end
+
+  test "shows a ranked result dashboard with tally details" do
+    election = Election.create!(title: "Votação em apuração", status: :open)
+    first_candidate = Candidate.create!(name: "Ana Ribeiro")
+    second_candidate = Candidate.create!(name: "Bruno Costa")
+    Candidacy.create!(election:, candidate: first_candidate, votes_count: 3)
+    Candidacy.create!(election:, candidate: second_candidate, votes_count: 1)
+    election.update!(tallied_at: Time.zone.parse("2026-08-06 14:30:00"))
+
+    get results_election_url(election)
+
+    assert_response :success
+    assert_select "h1", election.title
+    assert_select "[data-election-status]", "Votação aberta"
+    assert_select "[data-total-votes]", "4"
+    assert_select "[data-tallied-at]", "Última apuração: 06/08/2026 às 14:30"
+    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-name]", first_candidate.name
+    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-votes]", "3 votos · 75,0%"
+    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-name]", second_candidate.name
+    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-votes]", "1 voto · 25,0%"
+  end
+
+  test "shows zero results and pending tally for elections in every status" do
+    %i[pending open closed].each do |status|
+      election = Election.create!(title: "Votação #{status}", status:)
+      Candidacy.create!(election:, candidate: @candidate)
+
+      get results_election_url(election)
+
+      assert_response :success
+      assert_select "[data-total-votes]", "0"
+      assert_select "[data-tally-pending]", "Aguardando primeira apuração."
+      assert_select "[data-candidate-votes]", "0 votos · 0,0%"
+    end
+  end
+
+  test "shows an empty result state without candidates" do
+    election = Election.create!(title: "Votação sem candidatos")
+
+    get results_election_url(election)
+
+    assert_response :success
+    assert_select "[data-empty-state='results']", "Nenhum candidato foi adicionado a esta votação."
+  end
 end

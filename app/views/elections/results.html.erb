@@ -1,0 +1,77 @@
+<% content_for :title, "Resultados: #{@election.title}" %>
+
+<div class="w-full pb-20">
+  <%= link_to "Voltar para a página inicial", root_path, class: "inline-flex text-sm font-semibold text-smart-blue-500 underline decoration-smart-blue-500/30 underline-offset-4 transition duration-200 hover:text-sapphire-500 hover:decoration-sapphire-500" %>
+
+  <header class="mt-10 max-w-3xl">
+    <p class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-smart-blue-500" data-election-status>
+      <% if @election.open? %>
+        Votação aberta
+      <% elsif @election.closed? %>
+        Votação encerrada
+      <% else %>
+        Votação pendente
+      <% end %>
+    </p>
+    <h1 class="text-4xl font-semibold leading-none tracking-tight text-prussian-blue-dark md:text-6xl">
+      <%= @election.title %>
+    </h1>
+    <p class="mt-5 text-base leading-relaxed text-blue-slate-500">
+      Resultados da última apuração disponível.
+    </p>
+  </header>
+
+  <section class="mt-12 border-y border-lavender-grey-800 py-6 md:mt-16" aria-label="Resumo da eleição">
+    <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:gap-12">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-grey-500">Total de votos</p>
+        <p class="mt-2 text-4xl font-semibold tracking-tight text-prussian-blue-dark" data-total-votes><%= @total_votes %></p>
+      </div>
+      <div class="text-sm leading-relaxed text-blue-slate-500">
+        <% if @election.tallied_at? %>
+          <p data-tallied-at>Última apuração: <%= @election.tallied_at.strftime("%d/%m/%Y às %H:%M") %></p>
+        <% else %>
+          <p data-tally-pending>Aguardando primeira apuração.</p>
+        <% end %>
+
+        <% if @election.opened_at? %>
+          <p class="mt-1" data-opened-at>Aberta em: <%= @election.opened_at.strftime("%d/%m/%Y às %H:%M") %></p>
+        <% end %>
+        <% if @election.closed_at? %>
+          <p class="mt-1" data-closed-at>Encerrada em: <%= @election.closed_at.strftime("%d/%m/%Y às %H:%M") %></p>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <section class="mt-12 max-w-4xl md:mt-16" aria-labelledby="results-heading">
+    <div class="mb-6">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-grey-500">Apuração</p>
+      <h2 id="results-heading" class="text-2xl font-semibold tracking-tight text-prussian-blue-dark md:text-3xl">Candidatos</h2>
+    </div>
+
+    <% if @candidacies.any? %>
+      <ol class="divide-y divide-lavender-grey-800 border-y border-lavender-grey-800" data-results-list>
+        <% @candidacies.each_with_index do |candidacy, index| %>
+          <% percentage = @total_votes.zero? ? 0 : candidacy.votes_count.fdiv(@total_votes) * 100 %>
+          <li class="py-6" data-result-candidate>
+            <div class="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-baseline sm:gap-5">
+              <span class="text-sm font-semibold tabular-nums text-slate-grey-500" data-candidate-rank><%= index + 1 %></span>
+              <h3 class="text-lg font-medium text-regal-navy-500" data-candidate-name><%= candidacy.candidate.name %></h3>
+              <p class="text-sm font-semibold tabular-nums text-prussian-blue-dark" data-candidate-votes>
+                <%= candidacy.votes_count %> <%= "voto" if candidacy.votes_count == 1 %><%= "votos" unless candidacy.votes_count == 1 %> · <span data-candidate-percentage><%= number_to_percentage(percentage, precision: 1, separator: ",", strip_insignificant_zeros: false) %></span>
+              </p>
+            </div>
+            <div class="mt-4 h-2 overflow-hidden rounded-full bg-lavender-grey-900" aria-hidden="true">
+              <div class="h-full rounded-full bg-smart-blue-500" style="width: <%= percentage %>%" data-candidate-bar></div>
+            </div>
+          </li>
+        <% end %>
+      </ol>
+    <% else %>
+      <div class="border-y border-lavender-grey-800 py-10 text-blue-slate-500" data-empty-state="results">
+        Nenhum candidato foi adicionado a esta votação.
+      </div>
+    <% end %>
+  </section>
+</div>

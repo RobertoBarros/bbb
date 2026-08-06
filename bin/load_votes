@@ -26,12 +26,17 @@ abort "A eleição precisa estar aberta." unless election.open?
 candidacies = election.candidacies.includes(:candidate).order(:id).to_a
 abort "A eleição não possui candidatos." if candidacies.empty?
 
-weights = Array.new(candidacies.length, 0)
-weights[0] = 80
-weights[1] = 15 if candidacies.many?
-remaining_weight = 100 - weights.sum
-remaining_candidates = candidacies.length > 2 ? (2...candidacies.length).to_a : [ candidacies.length - 1 ]
-remaining_weight.times { |index| weights[remaining_candidates[index % remaining_candidates.length]] += 1 }
+weights = if candidacies.one?
+  [ 100 ]
+else
+  leader_index = rand(candidacies.length)
+  leader_weight = rand(70..90)
+  remaining_indices = (0...candidacies.length).to_a - [ leader_index ]
+  distribution = Array.new(candidacies.length, 0)
+  distribution[leader_index] = leader_weight
+  (100 - leader_weight).times { distribution[remaining_indices.sample] += 1 }
+  distribution
+end
 weighted_candidacy_ids = candidacies.zip(weights).flat_map do |candidacy, weight|
   Array.new(weight, candidacy.id)
 end
@@ -94,7 +99,7 @@ duration.times do |second|
   rate.times do
     break if interrupted
 
-    requests << weighted_candidacy_ids[scheduled % weighted_candidacy_ids.length]
+    requests << weighted_candidacy_ids.sample
     scheduled += 1
   end
 
