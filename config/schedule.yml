@@ -1,1 +1,5 @@
-{}
+refresh_election_results:
+  cron: "*/10 * * * * *"
+  class: "RefreshElectionResultsJob"
+  active_job: true
+  queue: default

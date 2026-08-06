@@ -10,12 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_235000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_000000) do
   create_table "candidacies", force: :cascade do |t|
     t.integer "candidate_id", null: false
     t.datetime "created_at", null: false
     t.integer "election_id", null: false
     t.datetime "updated_at", null: false
+    t.integer "votes_count", default: 0, null: false
     t.index ["candidate_id"], name: "index_candidacies_on_candidate_id"
     t.index ["election_id", "candidate_id"], name: "index_candidacies_on_election_id_and_candidate_id", unique: true
     t.index ["election_id"], name: "index_candidacies_on_election_id"
@@ -32,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_235000) do
     t.datetime "created_at", null: false
     t.datetime "opened_at"
     t.integer "status", default: 0, null: false
+    t.datetime "tallied_at"
     t.string "title", null: false
     t.datetime "updated_at", null: false
   end

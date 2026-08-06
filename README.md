@@ -41,6 +41,7 @@ erDiagram
     integer status
     datetime opened_at
     datetime closed_at
+    datetime tallied_at
   }
   CANDIDATES {
     integer id PK
@@ -50,6 +51,7 @@ erDiagram
     integer id PK
     integer election_id FK
     integer candidate_id FK
+    integer votes_count
   }
   VOTES {
     integer id PK
@@ -66,6 +68,31 @@ erDiagram
 Uma eleição aberta registra `opened_at`; ao encerrar, registra `closed_at`. O
 job só aceita votos submetidos dentro dessa janela e usa o ID do job para evitar
 duplicar uma submissão reprocessada.
+
+## Arquitetura da contagem de votos
+
+`Vote` é a fonte de verdade. `Candidacy#votes_count` é uma projeção de leitura
+reconstruível, usada para consultar os resultados sem agrupar todos os votos a
+cada leitura. `Election#tallied_at` informa quando essa projeção foi atualizada
+pela última vez.
+
+```text
+Vote
+  → Sidekiq Cron (a cada 10 segundos)
+  → RefreshElectionResultsJob
+  → GROUP BY candidacy_id
+  → Candidacy#votes_count e Election#tallied_at
+```
+
+O job atualiza eleições abertas e eleições encerradas nos últimos cinco
+minutos. Um lock no Redis impede execuções simultâneas. A fila `votes` tem
+prioridade sobre a fila `default`, onde a atualização dos resultados é
+executada.
+
+A apuração é provisória: um voto submetido antes do encerramento pode ainda
+estar na fila quando a primeira contagem ocorre. A janela de cinco minutos
+permite que a projeção convirja à medida que esses votos válidos são gravados.
+Ainda não há um mecanismo que marque a apuração como resultado oficial.
 
 ## Componentes em execução
 
