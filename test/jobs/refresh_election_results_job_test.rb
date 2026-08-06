@@ -1,14 +1,8 @@
 require "test_helper"
 
 class RefreshElectionResultsJobTest < ActiveJob::TestCase
-  parallelize(workers: 1)
-
-  setup do
-    Sidekiq.redis { |redis| redis.del(RefreshElectionResultsJob::LOCK_KEY) }
-  end
-
-  teardown do
-    Sidekiq.redis { |redis| redis.del(RefreshElectionResultsJob::LOCK_KEY) }
+  test "uses the results queue" do
+    assert_equal "results", RefreshElectionResultsJob.queue_name
   end
 
   test "updates open and recently closed elections" do
@@ -44,17 +38,5 @@ class RefreshElectionResultsJobTest < ActiveJob::TestCase
       assert_equal 8, old_closed_election.candidacies.first.reload.votes_count
       assert_nil old_closed_election.reload.tallied_at
     end
-  end
-
-  test "does not run while another tally holds the lock" do
-    open_election = elections(:open)
-    open_election.update_column(:tallied_at, nil)
-    Sidekiq.redis do |redis|
-      redis.set(RefreshElectionResultsJob::LOCK_KEY, "another-job", "NX", "EX", 60)
-    end
-
-    RefreshElectionResultsJob.perform_now
-
-    assert_nil open_election.reload.tallied_at
   end
 end

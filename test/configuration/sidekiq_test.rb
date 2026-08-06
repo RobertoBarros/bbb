@@ -26,7 +26,7 @@ class SidekiqTest < ActiveSupport::TestCase
           "cron" => "*/10 * * * * *",
           "class" => "RefreshElectionResultsJob",
           "active_job" => true,
-          "queue" => "default"
+          "queue" => "results"
         }
       },
       YAML.safe_load_file(schedule_path)
@@ -40,6 +40,6 @@ class SidekiqTest < ActiveSupport::TestCase
 
     assert_equal "*/10 * * * * *", job.cron
     assert_equal "RefreshElectionResultsJob", job.klass
-    assert_equal "default", Sidekiq.load_json(job.message).fetch("queue")
+    assert_equal "results", Sidekiq.load_json(job.message).fetch("queue")
   end
 end

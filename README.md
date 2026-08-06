@@ -84,20 +84,18 @@ Vote
   → Candidacy#votes_count e Election#tallied_at
 ```
 
-O job atualiza eleições abertas e eleições encerradas nos últimos cinco
-minutos. Um lock no Redis impede execuções simultâneas. A fila `votes` tem
-prioridade sobre a fila `default`, onde a atualização dos resultados é
-executada.
+A cada 10 segundos, o job atualiza eleições abertas ou encerradas recentemente
+(últimos cinco minutos). A fila `results` tem prioridade sobre `votes` para que
+a atualização não fique aguardando uma carga contínua de votos.
 
 A apuração é provisória: um voto submetido antes do encerramento pode ainda
 estar na fila quando a primeira contagem ocorre. A janela de cinco minutos
 permite que a projeção convirja à medida que esses votos válidos são gravados.
-Ainda não há um mecanismo que marque a apuração como resultado oficial.
 
 ## Componentes em execução
 
 - Puma atende as requisições Rails.
-- Sidekiq processa as filas `votes` e `default`, nessa ordem.
+- Sidekiq processa as filas `results`, `votes` e `default`, nessa ordem.
 - Redis armazena as filas do Sidekiq.
 - SQLite armazena eleições, candidatos, candidaturas e votos.
 - O dashboard do Sidekiq está disponível em `/sidekiq`.

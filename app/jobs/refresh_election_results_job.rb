@@ -1,24 +1,10 @@
 class RefreshElectionResultsJob < ApplicationJob
-  queue_as :default
+  queue_as :results
 
-  LOCK_KEY = "locks:refresh_election_tallies".freeze
-  LOCK_TTL = 1.minute
   RECENTLY_CLOSED_WINDOW = 5.minutes
-  RELEASE_LOCK_SCRIPT = <<~LUA.freeze
-    if redis.call("get", KEYS[1]) == ARGV[1] then
-      return redis.call("del", KEYS[1])
-    end
-    return 0
-  LUA
 
   def perform
-    token = SecureRandom.uuid
-    acquired = acquire_lock(token)
-    return unless acquired
-
     elections_to_tally.find_each { |election| refresh(election) }
-  ensure
-    release_lock(token) if acquired
   end
 
   private
@@ -39,13 +25,5 @@ class RefreshElectionResultsJob < ApplicationJob
 
         election.update!(tallied_at:)
       end
-    end
-
-    def acquire_lock(token)
-      Sidekiq.redis { |redis| redis.set(LOCK_KEY, token, "NX", "EX", LOCK_TTL.to_i) }
-    end
-
-    def release_lock(token)
-      Sidekiq.redis { |redis| redis.call("EVAL", RELEASE_LOCK_SCRIPT, 1, LOCK_KEY, token) }
     end
 end
