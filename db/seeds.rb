@@ -80,7 +80,10 @@ ApplicationRecord.transaction do
       )
 
       vote_count.times do
-        candidacy.votes.create!
+        candidacy.votes.create!(
+          submission_id: SecureRandom.uuid,
+          submitted_at: Time.current
+        )
       end
     end
 

@@ -1,29 +1,7 @@
 class VotesController < ApplicationController
-  before_action :set_election
-
   def create
-    if vote_params[:candidacy_id].blank?
-      redirect_to @election, alert: "Selecione um candidato para votar."
-      return
-    end
+    RegisterVoteJob.perform_later(params[:election_id], params.dig(:vote, :candidacy_id), Time.current)
 
-    candidacy = @election.candidacies.find(vote_params[:candidacy_id])
-    vote = candidacy.votes.new
-
-    if vote.save
-      redirect_to root_path, notice: "Voto registrado com sucesso."
-    else
-      redirect_to @election, alert: vote.errors.full_messages.to_sentence
-    end
+    redirect_to root_path, notice: "Voto registrado com sucesso."
   end
-
-  private
-
-    def set_election
-      @election = Election.find(params[:election_id])
-    end
-
-    def vote_params
-      params.fetch(:vote, ActionController::Parameters.new).permit(:candidacy_id)
-    end
 end

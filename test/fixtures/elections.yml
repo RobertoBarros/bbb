@@ -5,11 +5,15 @@ pending:
 open:
   title: Votação aberta
   status: open
+  opened_at: 2026-08-05 12:00:00
 
 second_open:
   title: Segunda votação aberta
   status: open
+  opened_at: 2026-08-05 13:00:00
 
 closed:
   title: Votação encerrada
   status: closed
+  opened_at: 2026-08-03 12:00:00
+  closed_at: 2026-08-04 12:00:00

@@ -6,15 +6,33 @@ class ElectionTest < ActiveSupport::TestCase
 
     assert_predicate election, :pending?
     assert_equal "pending", election.reload.status
+    assert_nil election.opened_at
+    assert_nil election.closed_at
   end
 
-  test "supports pending, open, and closed statuses" do
+  test "records the voting window while advancing statuses" do
     election = elections(:pending)
 
-    election.open!
-    assert_predicate election, :open?
+    travel_to Time.zone.local(2026, 8, 5, 10) do
+      election.open!
 
-    election.closed!
-    assert_predicate election, :closed?
+      assert_predicate election, :open?
+      assert_equal Time.current, election.opened_at
+      assert_nil election.closed_at
+    end
+
+    travel_to Time.zone.local(2026, 8, 5, 18) do
+      election.closed!
+
+      assert_predicate election, :closed?
+      assert_equal Time.current, election.closed_at
+    end
+  end
+
+  test "does not allow an election to reopen" do
+    election = elections(:closed)
+
+    assert_not election.update(status: :open)
+    assert_includes election.errors[:status], "não pode mudar de closed para open"
   end
 end

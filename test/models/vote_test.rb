@@ -2,18 +2,27 @@ require "test_helper"
 
 class VoteTest < ActiveSupport::TestCase
   test "requires a candidacy" do
-    vote = Vote.new
+    vote = Vote.new(submission_id: SecureRandom.uuid, submitted_at: Time.current)
 
     assert_not vote.valid?
     assert vote.errors.of_kind?(:candidacy, :blank)
+  end
+
+  test "requires submission metadata" do
+    vote = Vote.new(candidacy: candidacies(:open_maria))
+
+    assert_not vote.valid?
+    assert vote.errors.of_kind?(:submission_id, :blank)
+    assert vote.errors.of_kind?(:submitted_at, :blank)
   end
 
   test "allows multiple anonymous votes for the same candidacy" do
     candidacy = candidacies(:open_maria)
 
     assert_difference -> { candidacy.votes.count }, 2 do
-      Vote.create!(candidacy:)
-      Vote.create!(candidacy:)
+      2.times do
+        Vote.create!(candidacy:, submission_id: SecureRandom.uuid, submitted_at: Time.current)
+      end
     end
   end
 
@@ -29,7 +38,7 @@ class VoteTest < ActiveSupport::TestCase
   test "rejects votes for unavailable elections" do
     %i[pending_joao closed_ana].each do |fixture_name|
       candidacy = candidacies(fixture_name)
-      vote = Vote.new(candidacy:)
+      vote = Vote.new(candidacy:, submission_id: SecureRandom.uuid, submitted_at: Time.current)
 
       assert_not vote.valid?
       assert_includes vote.errors[:base], "Esta votação não está aberta."

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_173900) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_235000) do
   create_table "candidacies", force: :cascade do |t|
     t.integer "candidate_id", null: false
     t.datetime "created_at", null: false
@@ -28,7 +28,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_173900) do
   end
 
   create_table "elections", force: :cascade do |t|
+    t.datetime "closed_at"
     t.datetime "created_at", null: false
+    t.datetime "opened_at"
     t.integer "status", default: 0, null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
@@ -37,8 +39,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_173900) do
   create_table "votes", force: :cascade do |t|
     t.integer "candidacy_id", null: false
     t.datetime "created_at", null: false
+    t.string "submission_id", null: false
+    t.datetime "submitted_at", null: false
     t.datetime "updated_at", null: false
     t.index ["candidacy_id"], name: "index_votes_on_candidacy_id"
+    t.index ["submission_id"], name: "index_votes_on_submission_id", unique: true
   end
 
   add_foreign_key "candidacies", "candidates"
