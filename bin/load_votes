@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+require_relative "../config/environment"
+require "logger"
+require "sidekiq/api"
+
+rate = Integer(ENV.fetch("RATE", "1000"), 10)
+duration = Integer(ENV.fetch("DURATION", "10"), 10)
+
+abort "RATE deve ser maior que zero." unless rate.positive?
+abort "DURATION deve ser maior que zero." unless duration.positive?
+
+election = if ENV["ELECTION_ID"].present?
+  Election.find(ENV.fetch("ELECTION_ID"))
+else
+  Election.find_by!(status: :open)
+end
+
+abort "A eleição precisa estar aberta." unless election.open?
+
+candidacy_ids = election.candidacy_ids
+abort "A eleição não possui candidatos." if candidacy_ids.empty?
+
+ActiveJob::Base.logger = Logger.new(IO::NULL)
+
+queue = Sidekiq::Queue.new("votes")
+queue_size_before = queue.size
+total = rate * duration
+started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+slowest_batch = 0.0
+
+duration.times do |second|
+  batch_started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+  rate.times do |index|
+    candidacy_id = candidacy_ids[(second * rate + index) % candidacy_ids.length]
+    RegisterVoteJob.perform_later(election.id, candidacy_id, Time.current)
+  end
+
+  batch_duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - batch_started_at
+  slowest_batch = [ slowest_batch, batch_duration ].max
+
+  puts "Segundo #{second + 1}: #{rate} votos enfileirados em #{batch_duration.round(3)}s"
+  sleep(1 - batch_duration) if batch_duration < 1
+end
+
+elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+actual_rate = total / elapsed
+
+puts
+puts "Eleição: #{election.title} (#{election.id})"
+puts "Votos enfileirados: #{total}"
+puts "Tempo total: #{elapsed.round(2)}s"
+puts "Taxa alcançada: #{actual_rate.round(2)} votos/s"
+puts "Maior tempo para um lote: #{slowest_batch.round(3)}s"
+puts "Fila votes: #{queue_size_before} → #{queue.size}"
+
+abort "A taxa mínima de #{rate} votos/s não foi sustentada." if slowest_batch > 1
