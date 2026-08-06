@@ -104,9 +104,10 @@ No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
 
 ## Teste de carga
 
-O script [`bin/load_votes`](bin/load_votes) simula requisições reais de voto:
-obtém o token CSRF da página da eleição e envia `POST` para
-`/elections/:id/votes`. Ele não chama o Sidekiq diretamente.
+O cenário [load_tests/votes.js](load_tests/votes.js), executado com [k6](https://k6.io/), simula
+requisições reais de voto: obtém o token CSRF e os candidatos da página da
+eleição e envia `POST` para `/elections/:id/votes`. Ele não chama o Sidekiq
+diretamente.
 
 O Puma inicia com apenas três threads por padrão. Para que um teste com muitas
 conexões simultâneas não fique limitado pelo servidor antes de medir o fluxo de
@@ -118,19 +119,27 @@ RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 mise exec -- bin/dev
 
 `RAILS_MAX_THREADS` define as threads por worker e `WEB_CONCURRENCY` define a
 quantidade de workers. Nesse exemplo, o Puma pode atender até 128 requisições
-simultâneas (16 × 8), próximo das 100 conexões usadas no teste de carga abaixo.
+simultâneas (16 × 8).
 
 Para rodar o teste de carga execute:
 
 ```sh
-RATE=1000 DURATION=30 CONCURRENCY=100 mise exec -- bin/load_votes
+k6 run \
+  -e BASE_URL=http://localhost:3000 \
+  -e ELECTION_ID=1 \
+  -e RATE=1000 \
+  -e DURATION=30 \
+  -e CONCURRENCY=100 \
+  load_tests/votes.js
 ```
 
 - `RATE`: votos por segundo desejados; o padrão é `1000`.
 - `DURATION`: duração do teste em segundos; o padrão é `10`.
-- `CONCURRENCY`: número de conexões HTTP concorrentes; o padrão é `50`.
-- `ELECTION_ID`: eleição aberta específica; sem ela, o script usa a primeira
-  eleição aberta.
+- `CONCURRENCY`: máximo de VUs (requisições simultâneas); o padrão é `50`.
+- `ELECTION_ID`: eleição aberta a receber os votos; obrigatório.
 - `BASE_URL`: endereço da aplicação; o padrão é `http://localhost:3000`.
 
-Mais threads não tornam a persistência no SQLite paralela, elas aumentam a capacidade de receber e enfileirar votos.
+Mais threads não tornam a persistência no SQLite paralela; elas aumentam a
+capacidade de receber e enfileirar votos. Para medir a capacidade do servidor,
+prefira executar o k6 em outra máquina, para que ele não dispute recursos com
+Rails e Redis.
