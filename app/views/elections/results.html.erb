@@ -3,6 +3,12 @@
 <div class="w-full pb-20">
   <%= link_to "Voltar para a página inicial", root_path, class: "inline-flex text-sm font-semibold text-smart-blue-500 underline decoration-smart-blue-500/30 underline-offset-4 transition duration-200 hover:text-sapphire-500 hover:decoration-sapphire-500" %>
 
+  <% if notice %>
+    <div class="mt-8 border-y border-smart-blue-500 bg-smart-blue-900 px-4 py-4 font-medium text-prussian-blue-dark" role="status" data-flash="notice">
+      <%= notice %>
+    </div>
+  <% end %>
+
   <header class="mt-10 max-w-3xl">
     <p class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-smart-blue-500" data-election-status>
       <% if @election.open? %>

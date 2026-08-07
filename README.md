@@ -4,6 +4,23 @@ Aplicação Rails para votações anônimas entre candidatos. Uma eleição reú
 candidaturas; cada candidatura associa um candidato do catálogo global a uma
 eleição.
 
+## Rodando com Docker
+
+Com o Docker instalado, execute na raiz do projeto:
+
+```sh
+RAILS_MASTER_KEY="$(cat config/master.key)" docker compose up --build
+```
+
+Abra [http://localhost:3000](http://localhost:3000). O comando inicia a
+aplicação, o processador de votos e o Redis, sem precisar instalar Ruby.
+
+Para carregar os dados iniciais:
+
+```sh
+RAILS_MASTER_KEY="$(cat config/master.key)" docker compose run --rm web bin/rails db:seed
+```
+
 ## Arquitetura
 
 É um monólito Rails 8.1 com SQLite para os dados da aplicação e Redis para a
@@ -172,8 +189,18 @@ curl -H 'Accept: application/json' http://localhost:3000/elections/1/results
   },
   "total_votes": 4,
   "candidacies": [
-    { "id": 12, "candidate_name": "Maria da Silva", "votes_count": 3, "percentage": 75.0 },
-    { "id": 15, "candidate_name": "João Oliveira", "votes_count": 1, "percentage": 25.0 }
+    {
+      "id": 12,
+      "candidate_name": "Maria da Silva",
+      "votes_count": 3,
+      "percentage": 75.0
+    },
+    {
+      "id": 15,
+      "candidate_name": "João Oliveira",
+      "votes_count": 1,
+      "percentage": 25.0
+    }
   ]
 }
 ```
