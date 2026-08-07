@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_07_000000) do
   create_table "candidacies", force: :cascade do |t|
     t.integer "candidate_id", null: false
     t.datetime "created_at", null: false
@@ -36,6 +36,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_000000) do
     t.datetime "tallied_at"
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.decimal "votes_per_second", precision: 15, scale: 6, default: "0.0", null: false
   end
 
   create_table "votes", force: :cascade do |t|

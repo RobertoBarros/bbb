@@ -40,7 +40,8 @@ class ElectionsController < ApplicationController
             id: @election.id,
             title: @election.title,
             status: @election.status,
-            tallied_at: @election.tallied_at
+            tallied_at: @election.tallied_at,
+            votes_per_second: @election.votes_per_second.to_f
           },
           total_votes: @total_votes,
           candidacies: @candidacies.map do |candidacy|

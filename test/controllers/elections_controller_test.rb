@@ -82,7 +82,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     second_candidate = Candidate.create!(name: "Bruno Costa")
     Candidacy.create!(election:, candidate: first_candidate, votes_count: 3)
     Candidacy.create!(election:, candidate: second_candidate, votes_count: 1)
-    election.update!(tallied_at: Time.zone.parse("2026-08-06 14:30:00"))
+    election.update!(tallied_at: Time.zone.parse("2026-08-06 14:30:00"), votes_per_second: 1.25)
 
     get results_election_url(election)
 
@@ -90,6 +90,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", election.title
     assert_select "[data-election-status]", "Votação aberta"
     assert_select "[data-total-votes]", "4"
+    assert_select "[data-votes-per-second]", "1,25"
     assert_select "[data-tallied-at]", "Última apuração: 06/08/2026 às 14:30"
     assert_select "[data-result-candidate]:nth-child(1) [data-candidate-name]", first_candidate.name
     assert_select "[data-result-candidate]:nth-child(1) [data-candidate-votes]", "3 votos · 75,0%"
@@ -104,7 +105,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     first_candidacy = Candidacy.create!(election:, candidate: first_candidate, votes_count: 3)
     second_candidacy = Candidacy.create!(election:, candidate: second_candidate, votes_count: 1)
     tallied_at = Time.zone.parse("2026-08-06 14:30:00")
-    election.update!(tallied_at:)
+    election.update!(tallied_at:, votes_per_second: 1.25)
 
     get results_election_url(election), as: :json
 
@@ -115,7 +116,8 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
           "id" => election.id,
           "title" => election.title,
           "status" => "open",
-          "tallied_at" => tallied_at.as_json
+          "tallied_at" => tallied_at.as_json,
+          "votes_per_second" => 1.25
         },
         "total_votes" => 4,
         "candidacies" => [
@@ -136,6 +138,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :success
       assert_select "[data-total-votes]", "0"
+      assert_select "[data-votes-per-second]", "0,00"
       assert_select "[data-tally-pending]", "Aguardando primeira apuração."
       assert_select "[data-candidate-votes]", "0 votos · 0,0%"
     end

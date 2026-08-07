@@ -15,6 +15,14 @@ class RefreshElectionResultsJob < ApplicationJob
 
     def refresh(election)
       counts = election.votes.group(:candidacy_id).count
+      total_votes = counts.values.sum
+      first_submitted_at = election.votes.minimum(:submitted_at)
+      last_submitted_at = election.votes.maximum(:submitted_at)
+      votes_per_second = if total_votes.zero?
+        0
+      else
+        total_votes.fdiv([ last_submitted_at - first_submitted_at, 1 ].max)
+      end
       tallied_at = Time.current
 
       Election.transaction do
@@ -23,7 +31,7 @@ class RefreshElectionResultsJob < ApplicationJob
           candidacy.update!(votes_count:) if candidacy.votes_count != votes_count
         end
 
-        election.update!(tallied_at:)
+        election.update!(tallied_at:, votes_per_second:)
       end
     end
 end
