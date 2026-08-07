@@ -171,8 +171,7 @@ Uma submissão aceita retorna `202 Accepted`:
 ```
 
 A resposta confirma apenas o enfileiramento. A validação da eleição e da
-candidatura, assim como a persistência, ocorre no `RegisterVoteJob`; por isso,
-um `202` não confirma que o voto será gravado.
+candidatura, assim como a persistência, ocorre no `RegisterVoteJob`.
 
 ## Teste de carga
 
@@ -209,8 +208,3 @@ k6 run \
 - `CONCURRENCY`: máximo de VUs (requisições simultâneas); o padrão é `50`.
 - `ELECTION_ID`: eleição aberta a receber os votos; obrigatório.
 - `BASE_URL`: endereço da aplicação; o padrão é `http://localhost:3000`.
-
-Mais threads não tornam a persistência no SQLite paralela; elas aumentam a
-capacidade de receber e enfileirar votos. Para medir a capacidade do servidor,
-prefira executar o k6 em outra máquina, para que ele não dispute recursos com
-Rails e Redis.

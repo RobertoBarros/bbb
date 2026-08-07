@@ -7,8 +7,13 @@
 - Hotwire, Stimulus, Importmap, and Tailwind CSS.
 - Minitest for controller, model, integration, and system tests.
 - GitHub Actions is defined in `.github/workflows/ci.yml`.
-
-Honor `.ruby-version`. If the active shell does not select it automatically, prefix Ruby commands with `mise exec --`.
+- Votes are accepted asynchronously: `VotesController` enqueues
+  `RegisterVoteJob` in Redis/Sidekiq, which validates and persists the vote in
+  SQLite. A `202 Accepted` response confirms only that the submission was
+  queued; it does not confirm that the vote will be persisted.
+- `Vote` is the source of truth; `Candidacy#votes_count` is a periodically
+  refreshed read projection. Redis must be available to run the Sidekiq
+  integration and configuration tests.
 
 ## Working principles
 
