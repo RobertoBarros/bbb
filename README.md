@@ -59,6 +59,7 @@ erDiagram
     datetime opened_at
     datetime closed_at
     datetime tallied_at
+    decimal votes_per_second
   }
   CANDIDATES {
     integer id PK
@@ -91,14 +92,15 @@ duplicar uma submissão reprocessada.
 `Vote` é a fonte de verdade. `Candidacy#votes_count` é uma projeção de leitura
 reconstruível, usada para consultar os resultados sem agrupar todos os votos a
 cada leitura. `Election#tallied_at` informa quando essa projeção foi atualizada
-pela última vez.
+pela última vez, e `Election#votes_per_second` armazena a média de votos por
+segundo da apuração.
 
 ```text
 Vote
   → Sidekiq Cron (a cada 10 segundos)
   → RefreshElectionResultsJob
   → GROUP BY candidacy_id
-  → Candidacy#votes_count e Election#tallied_at
+  → Candidacy#votes_count, Election#tallied_at e Election#votes_per_second
 ```
 
 A cada 10 segundos, o job atualiza eleições abertas ou encerradas recentemente
@@ -108,6 +110,9 @@ a atualização não fique aguardando uma carga contínua de votos.
 A apuração é provisória: um voto submetido antes do encerramento pode ainda
 estar na fila quando a primeira contagem ocorre. A janela de cinco minutos
 permite que a projeção convirja à medida que esses votos válidos são gravados.
+`votes_per_second` considera os votos persistidos e seus horários de
+`submitted_at`: divide o total pelo intervalo entre a primeira e a última
+submissão, usando uma janela mínima de um segundo.
 
 ## Componentes em execução
 
@@ -173,7 +178,8 @@ eleição não existir.
 Retorna a última projeção de apuração, ordenada pela quantidade de votos e,
 em caso de empate, pelo ID da candidatura. `tallied_at` indica quando a
 projeção foi atualizada pela última vez e pode ser `null` antes da primeira
-apuração.
+apuração. `votes_per_second` é a média de votos persistidos por segundo desde a
+primeira submissão registrada.
 
 ```sh
 curl -H 'Accept: application/json' http://localhost:3000/elections/1/results
@@ -185,7 +191,8 @@ curl -H 'Accept: application/json' http://localhost:3000/elections/1/results
     "id": 1,
     "title": "Eleição do conselho",
     "status": "open",
-    "tallied_at": "2026-08-06T17:30:00.000Z"
+    "tallied_at": "2026-08-06T17:30:00.000Z",
+    "votes_per_second": 1.25
   },
   "total_votes": 4,
   "candidacies": [
