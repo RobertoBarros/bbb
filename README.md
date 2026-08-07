@@ -149,6 +149,38 @@ curl -H 'Accept: application/json' http://localhost:3000/elections/1
 `status` pode ser `pending`, `open` ou `closed`. O endpoint retorna `404` se a
 eleição não existir.
 
+### Consultar resultados
+
+`GET /elections/:id/results`
+
+Retorna a última projeção de apuração, ordenada pela quantidade de votos e,
+em caso de empate, pelo ID da candidatura. `tallied_at` indica quando a
+projeção foi atualizada pela última vez e pode ser `null` antes da primeira
+apuração.
+
+```sh
+curl -H 'Accept: application/json' http://localhost:3000/elections/1/results
+```
+
+```json
+{
+  "election": {
+    "id": 1,
+    "title": "Eleição do conselho",
+    "status": "open",
+    "tallied_at": "2026-08-06T17:30:00.000Z"
+  },
+  "total_votes": 4,
+  "candidacies": [
+    { "id": 12, "candidate_name": "Maria da Silva", "votes_count": 3, "percentage": 75.0 },
+    { "id": 15, "candidate_name": "João Oliveira", "votes_count": 1, "percentage": 25.0 }
+  ]
+}
+```
+
+`votes_count` e `percentage` são derivados da última apuração disponível; a
+submissão de um voto aceita pela API ainda pode não estar refletida nela.
+
 ### Enviar um voto
 
 `POST /elections/:election_id/votes`

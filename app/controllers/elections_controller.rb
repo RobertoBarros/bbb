@@ -30,5 +30,29 @@ class ElectionsController < ApplicationController
     @election = Election.find(params[:id])
     @candidacies = @election.candidacies.includes(:candidate).order(votes_count: :desc, id: :asc)
     @total_votes = @candidacies.sum(&:votes_count)
+
+    respond_to do |format|
+      format.html
+
+      format.json do
+        render json: {
+          election: {
+            id: @election.id,
+            title: @election.title,
+            status: @election.status,
+            tallied_at: @election.tallied_at
+          },
+          total_votes: @total_votes,
+          candidacies: @candidacies.map do |candidacy|
+            {
+              id: candidacy.id,
+              candidate_name: candidacy.candidate.name,
+              votes_count: candidacy.votes_count,
+              percentage: @total_votes.zero? ? 0 : candidacy.votes_count.fdiv(@total_votes) * 100
+            }
+          end
+        }
+      end
+    end
   end
 end
