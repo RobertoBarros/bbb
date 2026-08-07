@@ -4,7 +4,7 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
 
-  resources :elections, only: :show do
+  resources :elections, only: [ :index, :show ] do
     get :results, on: :member
     resources :votes, only: :create
   end

@@ -102,19 +102,90 @@ permite que a projeção convirja à medida que esses votos válidos são gravad
 
 No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
 
+## API JSON
+
+Os endpoints abaixo são públicos e respondem JSON quando a requisição usa
+`Accept: application/json` ou a extensão `.json`.
+
+### Listar eleições
+
+`GET /elections`
+
+Retorna as eleições em ordem de ID, com os dados necessários para identificá-las:
+
+```sh
+curl -H 'Accept: application/json' http://localhost:3000/elections
+```
+
+```json
+{
+  "elections": [
+    { "id": 1, "title": "Eleição do conselho", "status": "open" },
+    { "id": 2, "title": "Eleição do grêmio", "status": "closed" }
+  ]
+}
+```
+
+### Consultar uma eleição
+
+`GET /elections/:id`
+
+Retorna o estado da eleição e as candidaturas disponíveis, em ordem de ID:
+
+```sh
+curl -H 'Accept: application/json' http://localhost:3000/elections/1
+```
+
+```json
+{
+  "status": "open",
+  "candidacies": [
+    { "id": 12, "candidate_name": "Maria da Silva" },
+    { "id": 15, "candidate_name": "João Oliveira" }
+  ]
+}
+```
+
+`status` pode ser `pending`, `open` ou `closed`. O endpoint retorna `404` se a
+eleição não existir.
+
+### Enviar um voto
+
+`POST /elections/:election_id/votes`
+
+Envie o ID da candidatura no corpo JSON. Não é necessário token CSRF ou cookie:
+
+```sh
+curl -X POST http://localhost:3000/elections/1/votes \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{"vote":{"candidacy_id":12}}'
+```
+
+Uma submissão aceita retorna `202 Accepted`:
+
+```json
+{
+  "message": "Voto registrado com sucesso."
+}
+```
+
+A resposta confirma apenas o enfileiramento. A validação da eleição e da
+candidatura, assim como a persistência, ocorre no `RegisterVoteJob`; por isso,
+um `202` não confirma que o voto será gravado.
+
 ## Teste de carga
 
 O cenário [load_tests/votes.js](load_tests/votes.js), executado com [k6](https://k6.io/), simula
-requisições reais de voto: obtém o token CSRF e os candidatos da página da
-eleição e envia `POST` para `/elections/:id/votes`. Ele não chama o Sidekiq
-diretamente.
+requisições reais de voto: consulta a eleição como JSON para obter as candidaturas
+e envia `POST` para `/elections/:id/votes`. Ele não chama o Sidekiq diretamente.
 
 O Puma inicia com apenas três threads por padrão. Para que um teste com muitas
 conexões simultâneas não fique limitado pelo servidor antes de medir o fluxo de
 votação, aumente as threads e os workers do Puma ao iniciar o `bin/dev`:
 
 ```sh
-RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 mise exec -- bin/dev
+RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 bin/dev
 ```
 
 `RAILS_MAX_THREADS` define as threads por worker e `WEB_CONCURRENCY` define a

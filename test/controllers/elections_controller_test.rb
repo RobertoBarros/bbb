@@ -5,6 +5,20 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     @candidate = Candidate.create!(name: "Maria de Oliveira")
   end
 
+  test "lists all elections as JSON" do
+    get elections_url, as: :json
+
+    assert_response :success
+    assert_equal(
+      {
+        "elections" => Election.order(:id).map do |election|
+          { "id" => election.id, "title" => election.title, "status" => election.status }
+        end
+      },
+      response.parsed_body
+    )
+  end
+
   test "shows candidates and voting form for an open election" do
     election = Election.create!(title: "Votação aberta", status: :open)
     candidacy = Candidacy.create!(election:, candidate: @candidate)
@@ -17,6 +31,26 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[data-voting-form][action=?][method=post]", election_votes_path(election)
     assert_select "input[type=radio][name='vote[candidacy_id]'][value=?]", candidacy.id.to_s
     assert_select "input[type=submit][value='Confirmar voto']"
+  end
+
+  test "returns an election status and candidacy IDs as JSON" do
+    election = Election.create!(title: "Votação aberta", status: :open)
+    first_candidacy = Candidacy.create!(election:, candidate: @candidate)
+    second_candidacy = Candidacy.create!(election:, candidate: Candidate.create!(name: "João da Silva"))
+
+    get election_url(election), as: :json
+
+    assert_response :success
+    assert_equal(
+      {
+        "status" => "open",
+        "candidacies" => [
+          { "id" => first_candidacy.id, "candidate_name" => @candidate.name },
+          { "id" => second_candidacy.id, "candidate_name" => "João da Silva" }
+        ]
+      },
+      response.parsed_body
+    )
   end
 
   test "shows candidates without voting form for unavailable elections" do

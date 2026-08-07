@@ -34,6 +34,62 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
+  test "accepts a JSON vote without a CSRF token" do
+    election = elections(:open)
+    candidacy = candidacies(:open_maria)
+    original_forgery_protection = ActionController::Base.allow_forgery_protection
+
+    ActionController::Base.allow_forgery_protection = true
+
+    travel_to Time.zone.local(2026, 8, 5, 15) do
+      assert_enqueued_with(job: RegisterVoteJob, args: [ election.id.to_s, candidacy.id, Time.current ]) do
+        post election_votes_url(election),
+          params: { vote: { candidacy_id: candidacy.id } },
+          as: :json
+      end
+    end
+
+    assert_response :accepted
+    assert_equal({ "message" => "Voto registrado com sucesso." }, response.parsed_body)
+  ensure
+    ActionController::Base.allow_forgery_protection = original_forgery_protection
+  end
+
+  test "enqueues a JSON vote without a candidacy for the job to discard" do
+    travel_to Time.zone.local(2026, 8, 5, 15) do
+      assert_enqueued_with(job: RegisterVoteJob, args: [ elections(:open).id.to_s, nil, Time.current ]) do
+        post election_votes_url(elections(:open)), params: { vote: {} }, as: :json
+      end
+    end
+
+    assert_response :accepted
+  end
+
+  test "enqueues a JSON vote for an unknown candidacy for the job to discard" do
+    election = elections(:open)
+
+    travel_to Time.zone.local(2026, 8, 5, 15) do
+      assert_enqueued_with(job: RegisterVoteJob, args: [ election.id.to_s, -1, Time.current ]) do
+        post election_votes_url(election), params: { vote: { candidacy_id: -1 } }, as: :json
+      end
+    end
+
+    assert_response :accepted
+  end
+
+  test "enqueues a JSON vote for a candidacy from another election for the job to discard" do
+    election = elections(:open)
+    candidacy = candidacies(:second_open_joao)
+
+    travel_to Time.zone.local(2026, 8, 5, 15) do
+      assert_enqueued_with(job: RegisterVoteJob, args: [ election.id.to_s, candidacy.id, Time.current ]) do
+        post election_votes_url(election), params: { vote: { candidacy_id: candidacy.id } }, as: :json
+      end
+    end
+
+    assert_response :accepted
+  end
+
   test "enqueues each repeated anonymous submission" do
     election = elections(:open)
     candidacy = candidacies(:open_maria)

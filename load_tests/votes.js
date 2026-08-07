@@ -32,12 +32,6 @@ export const options = {
 
 const votesSuccess = new Counter("votes_success");
 
-function candidacyIdsFrom(html) {
-  return [...html.matchAll(/<input[^>]+name="vote\[candidacy_id\]"[^>]*>/g)]
-    .map(([tag]) => tag.match(/value="([^"]+)"/)?.[1])
-    .filter(Boolean);
-}
-
 function weightedCandidacyIds(ids) {
   if (ids.length === 1) return ids;
 
@@ -56,33 +50,22 @@ function weightedCandidacyIds(ids) {
 }
 
 export function setup() {
-  const page = http.get(`${baseUrl}/elections/${electionId}`);
-  if (page.status !== 200) {
-    throw new Error(`Não foi possível abrir a eleição: HTTP ${page.status}.`);
+  const election = http.get(`${baseUrl}/elections/${electionId}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (election.status !== 200) {
+    throw new Error(`Não foi possível consultar a eleição: HTTP ${election.status}.`);
   }
 
-  const csrfToken = page.body.match(
-    /<meta name="csrf-token" content="([^"]+)"/
-  )?.[1];
-  if (!csrfToken) throw new Error("Token CSRF não encontrado.");
+  const electionData = election.json();
 
-  if (!page.body.includes("data-voting-form")) {
-    if (page.body.includes('data-empty-state="candidates"')) {
-      throw new Error("A eleição não possui candidatos.");
-    }
-
+  if (electionData.status !== "open") {
     throw new Error("A eleição precisa estar aberta.");
   }
 
-  const ids = candidacyIdsFrom(page.body);
-  if (!ids.length) throw new Error("Campos de candidatura não encontrados.");
+  if (!electionData.candidacies.length) throw new Error("A eleição não possui candidatos.");
 
-  const cookie = Object.values(page.cookies)
-    .flat()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
-
-  return { csrfToken, cookie, candidacyIds: weightedCandidacyIds(ids) };
+  return { candidacyIds: weightedCandidacyIds(electionData.candidacies.map((candidacy) => candidacy.id)) };
 }
 
 export default function (data) {
@@ -90,23 +73,18 @@ export default function (data) {
     data.candidacyIds[Math.floor(Math.random() * data.candidacyIds.length)];
   const response = http.post(
     `${baseUrl}/elections/${electionId}/votes`,
+    JSON.stringify({ vote: { candidacy_id: candidacyId } }),
     {
-      authenticity_token: data.csrfToken,
-      "vote[candidacy_id]": candidacyId,
-    },
-    {
-      redirects: 0,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        ...(data.cookie ? { Cookie: data.cookie } : {}),
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
     }
   );
 
   if (
     check(response, {
-      "voto redirecionou com sucesso": (result) =>
-        result.status === 302 || result.status === 303,
+      "voto aceito com sucesso": (result) => result.status === 202,
     })
   ) {
     votesSuccess.add(1);
