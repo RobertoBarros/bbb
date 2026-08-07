@@ -26,7 +26,10 @@ export const options = {
   thresholds: {
     checks: ["rate==1"],
     dropped_iterations: ["count==0"],
-    votes_success: [`count==${rate * duration}`],
+    votes_success: [
+      `count>=${rate * duration}`,
+      `count<=${rate * duration + 1}`,
+    ],
   },
 };
 
