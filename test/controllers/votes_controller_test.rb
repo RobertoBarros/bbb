@@ -5,7 +5,7 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
     ActionController::Base.cache_store.clear
   end
 
-  test "enqueues a vote without persisting it and redirects to home" do
+  test "enqueues a vote without persisting it and redirects to the election results" do
     election = elections(:open)
     candidacy = candidacies(:open_maria)
 
@@ -21,7 +21,7 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to results_election_url(election)
     assert_equal "Voto registrado com sucesso.", flash[:notice]
 
     follow_redirect!
@@ -35,7 +35,7 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to results_election_url(elections(:open))
   end
 
   test "accepts a JSON vote without a CSRF token" do

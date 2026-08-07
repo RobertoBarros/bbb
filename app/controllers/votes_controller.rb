@@ -9,7 +9,7 @@ class VotesController < ApplicationController
 
     respond_to do |format|
       format.html do
-        redirect_to root_path, notice: "Voto registrado com sucesso."
+        redirect_to results_election_path(params[:election_id]), notice: "Voto registrado com sucesso."
       end
 
       format.json do
