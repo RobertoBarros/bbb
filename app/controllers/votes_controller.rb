@@ -1,6 +1,9 @@
 class VotesController < ApplicationController
   skip_forgery_protection only: :create, if: -> { request.format.json? }
 
+  rate_limit to: 5, within: 1.minute, only: :create,
+    unless: -> { ENV["LOAD_TEST_MODE"] == "true" }
+
   def create
     RegisterVoteJob.perform_later(params[:election_id], params.dig(:vote, :candidacy_id), Time.current)
 

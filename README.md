@@ -211,13 +211,17 @@ O cenário [load_tests/votes.js](load_tests/votes.js), executado com [k6](https:
 requisições reais de voto: consulta a eleição como JSON para obter as candidaturas
 e envia `POST` para `/elections/:id/votes`. Ele não chama o Sidekiq diretamente.
 
-O Puma inicia com apenas três threads por padrão. Para que um teste com muitas
-conexões simultâneas não fique limitado pelo servidor antes de medir o fluxo de
-votação, aumente as threads e os workers do Puma ao iniciar o `bin/dev`:
+O envio de votos é limitado a cinco requisições por minuto para cada IP. Para
+evitar `429 Too Many Requests` e aumentar a capacidade do Puma durante o teste
+de carga, inicie a aplicação com:
 
 ```sh
-RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 bin/dev
+LOAD_TEST_MODE=true RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 bin/dev
 ```
+
+Enquanto esse modo estiver ativo, o limite de votos fica desativado para todos
+os clientes. Ao término do teste, reinicie a aplicação sem a variável (o padrão
+é `false`) ou com `LOAD_TEST_MODE=false`.
 
 `RAILS_MAX_THREADS` define as threads por worker e `WEB_CONCURRENCY` define a
 quantidade de workers. Nesse exemplo, o Puma pode atender até 128 requisições

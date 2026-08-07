@@ -1,6 +1,10 @@
 require "test_helper"
 
 class VotesControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    ActionController::Base.cache_store.clear
+  end
+
   test "enqueues a vote without persisting it and redirects to home" do
     election = elections(:open)
     candidacy = candidacies(:open_maria)
@@ -101,5 +105,83 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
         end
       end
     end
+  end
+
+  test "limits vote requests from the same IP" do
+    election = elections(:open)
+    candidacy = candidacies(:open_maria)
+    headers = { "REMOTE_ADDR" => "192.0.2.1" }
+
+    assert_enqueued_jobs 5, only: RegisterVoteJob do
+      5.times do
+        post election_votes_url(election), params: { vote: { candidacy_id: candidacy.id } }, headers: headers
+        assert_response :redirect
+      end
+    end
+
+    assert_no_enqueued_jobs only: RegisterVoteJob do
+      post election_votes_url(election), params: { vote: { candidacy_id: candidacy.id } }, headers: headers
+    end
+
+    assert_response :too_many_requests
+  end
+
+  test "allows vote requests from a different IP after a rate limit" do
+    election = elections(:open)
+    candidacy = candidacies(:open_maria)
+
+    6.times do
+      post election_votes_url(election),
+        params: { vote: { candidacy_id: candidacy.id } },
+        headers: { "REMOTE_ADDR" => "192.0.2.1" }
+    end
+
+    assert_response :too_many_requests
+
+    assert_enqueued_jobs 1, only: RegisterVoteJob do
+      post election_votes_url(election),
+        params: { vote: { candidacy_id: candidacy.id } },
+        headers: { "REMOTE_ADDR" => "192.0.2.2" }
+    end
+
+    assert_response :redirect
+  end
+
+  test "disables the vote rate limit in load test mode" do
+    election = elections(:open)
+    candidacy = candidacies(:open_maria)
+    original_load_test_mode = ENV["LOAD_TEST_MODE"]
+    ENV["LOAD_TEST_MODE"] = "true"
+
+    assert_enqueued_jobs 6, only: RegisterVoteJob do
+      6.times do
+        post election_votes_url(election),
+          params: { vote: { candidacy_id: candidacy.id } },
+          headers: { "REMOTE_ADDR" => "192.0.2.1" }
+        assert_response :redirect
+      end
+    end
+  ensure
+    ENV["LOAD_TEST_MODE"] = original_load_test_mode
+  end
+
+  test "keeps the vote rate limit enabled when load test mode is false or invalid" do
+    election = elections(:open)
+    candidacy = candidacies(:open_maria)
+    original_load_test_mode = ENV["LOAD_TEST_MODE"]
+
+    [ "false", "enabled" ].each_with_index do |load_test_mode, index|
+      ENV["LOAD_TEST_MODE"] = load_test_mode
+
+      6.times do
+        post election_votes_url(election),
+          params: { vote: { candidacy_id: candidacy.id } },
+          headers: { "REMOTE_ADDR" => "192.0.2.#{index + 1}" }
+      end
+
+      assert_response :too_many_requests
+    end
+  ensure
+    ENV["LOAD_TEST_MODE"] = original_load_test_mode
   end
 end
