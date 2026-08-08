@@ -124,6 +124,61 @@ submissão, usando uma janela mínima de um segundo.
 
 No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
 
+## Monitoramento local
+
+Em ambientes locais, a aplicação expõe métricas Prometheus em
+`http://localhost:3000/metrics`. Esse endpoint não é exposto em produção.
+Ao iniciar o Puma com mais de um worker, a aplicação agrega as métricas dos
+processos em `tmp/prometheus`; arquivos de processos já encerrados são
+removidos na inicialização.
+
+O processo `jobs` também inicia um exporter somente local em
+`http://127.0.0.1:9394/metrics`. Ele expõe a profundidade, a latência, as taxas
+de sucesso e falha e o tempo de execução das filas Sidekiq. Após alterar o
+`Procfile.dev`, reinicie o `bin/dev` para aplicar essa configuração.
+
+Instale o Prometheus e o Grafana com Homebrew:
+
+```sh
+brew install prometheus grafana
+```
+
+Copie a configuração versionada do Prometheus para a instalação local:
+
+```sh
+cp config/prometheus/prometheus.local.yml "$(brew --prefix)/etc/prometheus.yml"
+```
+
+Edite `$(brew --prefix)/etc/grafana/grafana.ini` e configure a porta do
+Grafana para não conflitar com o Rails:
+
+```ini
+[server]
+http_port = 3001
+```
+
+Com o Rails em execução na porta 3000, inicie os serviços:
+
+```sh
+brew services start prometheus
+brew services start grafana
+```
+
+O Prometheus estará em [http://localhost:9090](http://localhost:9090) e o
+Grafana em [http://localhost:3001](http://localhost:3001). Para provisionar
+automaticamente o datasource Prometheus e o dashboard versionado, adicione ao
+bloco `[paths]` de `$(brew --prefix)/etc/grafana/grafana.ini`:
+
+```ini
+provisioning = /Users/roberto/code/bbb/config/grafana/provisioning
+```
+
+Reinicie o Grafana após essa alteração. O dashboard **Rails - Endpoints**
+mostra requisições por segundo, latência p95 por endpoint, respostas por faixa
+de status e os endpoints mais lentos. Ele usa uma janela de taxa adaptativa,
+adequada para visualizar testes curtos de carga. O dashboard **Sidekiq -
+Filas** é provisionado no mesmo diretório e mostra a situação de cada fila.
+
 ## API JSON
 
 Os endpoints abaixo são públicos e respondem JSON quando a requisição usa

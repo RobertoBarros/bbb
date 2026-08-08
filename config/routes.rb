@@ -4,6 +4,8 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   mount Sidekiq::Web => "/sidekiq"
 
+  mount Yabeda::Prometheus::Exporter => "/metrics" if Rails.env.local?
+
   resources :elections, only: [ :index, :show ] do
     get :results, on: :member
     resources :votes, only: :create

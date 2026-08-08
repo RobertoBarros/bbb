@@ -47,6 +47,12 @@ gem "image_processing", "~> 2.0"
 gem "ruby-vips", "~> 2.0"
 
 group :development, :test do
+  # Expose Rails request metrics to Prometheus in local environments.
+  gem "yabeda-rails"
+  gem "yabeda-prometheus"
+  gem "yabeda-sidekiq"
+  gem "webrick"
+
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 

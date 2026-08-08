@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: Rails
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 5
+    options:
+      path: /Users/roberto/code/bbb/config/grafana/dashboards
