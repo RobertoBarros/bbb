@@ -22,7 +22,11 @@ Rails.application.configure do
       begin
         Process.kill(0, process_id.to_i)
       rescue Errno::ESRCH
-        File.delete(file_path)
+        begin
+          File.delete(file_path)
+        rescue Errno::ENOENT
+          # The file was removed by another worker.
+        end
       rescue Errno::ENOENT, Errno::EPERM
         # The file was removed by another worker or belongs to an active process.
       end

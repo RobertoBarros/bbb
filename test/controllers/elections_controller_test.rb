@@ -90,6 +90,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", election.title
     assert_select "[data-election-status]", "Votação aberta"
     assert_select "[data-total-votes]", "4"
+    assert_select "p", "Votos por segundo nos 5 segundos até o último voto processado"
     assert_select "[data-votes-per-second]", "1,25"
     assert_select "[data-tallied-at]", "Última apuração: 06/08/2026 às 14:30"
     assert_select "[data-result-candidate]:nth-child(1) [data-candidate-name]", first_candidate.name

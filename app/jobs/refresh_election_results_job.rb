@@ -2,6 +2,7 @@ class RefreshElectionResultsJob < ApplicationJob
   queue_as :results
 
   RECENTLY_CLOSED_WINDOW = 5.minutes
+  VOTES_PER_SECOND_WINDOW = 5.seconds
 
   def perform
     elections_to_tally.find_each { |election| refresh(election) }
@@ -15,13 +16,11 @@ class RefreshElectionResultsJob < ApplicationJob
 
     def refresh(election)
       counts = election.votes.group(:candidacy_id).count
-      total_votes = counts.values.sum
-      first_submitted_at = election.votes.minimum(:submitted_at)
       last_submitted_at = election.votes.maximum(:submitted_at)
-      votes_per_second = if total_votes.zero?
-        0
+      votes_per_second = if last_submitted_at
+        election.votes.where(submitted_at: (last_submitted_at - VOTES_PER_SECOND_WINDOW)..last_submitted_at).count.fdiv(VOTES_PER_SECOND_WINDOW)
       else
-        total_votes.fdiv([ last_submitted_at - first_submitted_at, 1 ].max)
+        0
       end
       tallied_at = Time.current
 
