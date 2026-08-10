@@ -140,8 +140,8 @@ No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
 O comando `docker compose up --build` também inicia Prometheus e Grafana. O
 Prometheus coleta as métricas do Rails e do Sidekiq apenas pela rede interna do
 Docker e está disponível em [http://localhost:9090](http://localhost:9090).
-O Grafana está em [http://localhost:3001](http://localhost:3001); entre com
-`admin` / `admin` e altere a senha quando solicitado.
+O Grafana está em [http://localhost:3001](http://localhost:3001) e pode ser
+acessado sem autenticação, com permissão somente de visualização.
 
 O dashboard provisionado mostra requisições por segundo, latência p95 por
 endpoint, respostas por faixa de status, endpoints mais lentos e a situação das
@@ -275,6 +275,12 @@ de carga, inicie a aplicação com:
 
 ```sh
 LOAD_TEST_MODE=true RAILS_MAX_THREADS=16 WEB_CONCURRENCY=8 bin/dev
+```
+
+Com Docker, use o override dedicado:
+
+```sh
+docker compose -f compose.yml -f compose.load-test.yml up --build
 ```
 
 Enquanto esse modo estiver ativo, o limite de votos fica desativado para todos
