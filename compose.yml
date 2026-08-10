@@ -3,6 +3,7 @@ x-app: &app
   environment:
     RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:-}
     REDIS_URL: redis://redis:6379/0
+    METRICS_ENABLED: "true"
   volumes:
     - app_storage:/rails/storage
 
@@ -38,7 +39,49 @@ services:
         condition: service_healthy
       web:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:9394/metrics" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    depends_on:
+      web:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:9090/-/ready" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  grafana:
+    image: grafana/grafana:12.0.0
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:3000/api/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   app_storage:
   redis_data:
+  prometheus_data:
+  grafana_data:

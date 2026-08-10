@@ -105,15 +105,18 @@ segundo da apuração.
 
 ```text
 Vote
-  → Sidekiq Cron (a cada 10 segundos)
+  → Sidekiq Cron (a cada 5 segundos)
   → RefreshElectionResultsJob
   → GROUP BY candidacy_id
   → Candidacy#votes_count, Election#tallied_at e Election#votes_per_second
 ```
 
-A cada 10 segundos, o job atualiza eleições abertas ou encerradas recentemente
+A cada 5 segundos, o job atualiza eleições abertas ou encerradas recentemente
 (últimos cinco minutos). A fila `results` tem prioridade sobre `votes` para que
 a atualização não fique aguardando uma carga contínua de votos.
+
+> **Atenção:** os resultados exibidos na web podem apresentar até 5 segundos de
+> atraso em relação aos votos processados.
 
 A apuração é provisória: um voto submetido antes do encerramento pode ainda
 estar na fila quando a primeira contagem ocorre. A janela de cinco minutos
@@ -132,60 +135,18 @@ submissão, usando uma janela mínima de um segundo.
 
 No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
 
-## Monitoramento local
+## Monitoramento com Prometheus e Grafana
 
-Em ambientes locais, a aplicação expõe métricas Prometheus em
-`http://localhost:3000/metrics`. Esse endpoint não é exposto em produção.
-Ao iniciar o Puma com mais de um worker, a aplicação agrega as métricas dos
-processos em `tmp/prometheus`; arquivos de processos já encerrados são
-removidos na inicialização.
+O comando `docker compose up --build` também inicia Prometheus e Grafana. O
+Prometheus coleta as métricas do Rails e do Sidekiq apenas pela rede interna do
+Docker e está disponível em [http://localhost:9090](http://localhost:9090).
+O Grafana está em [http://localhost:3001](http://localhost:3001); entre com
+`admin` / `admin` e altere a senha quando solicitado.
 
-O processo `jobs` também inicia um exporter somente local em
-`http://127.0.0.1:9394/metrics`. Ele expõe a profundidade, a latência, as taxas
-de sucesso e falha e o tempo de execução das filas Sidekiq. Após alterar o
-`Procfile.dev`, reinicie o `bin/dev` para aplicar essa configuração.
-
-Instale o Prometheus e o Grafana com Homebrew:
-
-```sh
-brew install prometheus grafana
-```
-
-Copie a configuração versionada do Prometheus para a instalação local:
-
-```sh
-cp config/prometheus/prometheus.local.yml "$(brew --prefix)/etc/prometheus.yml"
-```
-
-Edite `$(brew --prefix)/etc/grafana/grafana.ini` e configure a porta do
-Grafana para não conflitar com o Rails:
-
-```ini
-[server]
-http_port = 3001
-```
-
-Com o Rails em execução na porta 3000, inicie os serviços:
-
-```sh
-brew services start prometheus
-brew services start grafana
-```
-
-O Prometheus estará em [http://localhost:9090](http://localhost:9090) e o
-Grafana em [http://localhost:3001](http://localhost:3001). Para provisionar
-automaticamente o datasource Prometheus e o dashboard versionado, adicione ao
-bloco `[paths]` de `$(brew --prefix)/etc/grafana/grafana.ini`:
-
-```ini
-provisioning = /Users/roberto/code/bbb/config/grafana/provisioning
-```
-
-Reinicie o Grafana após essa alteração. O dashboard **Rails - Endpoints**
-mostra requisições por segundo, latência p95 por endpoint, respostas por faixa
-de status e os endpoints mais lentos. Ele usa uma janela de taxa adaptativa,
-adequada para visualizar testes curtos de carga. O dashboard **Sidekiq -
-Filas** é provisionado no mesmo diretório e mostra a situação de cada fila.
+O dashboard provisionado mostra requisições por segundo, latência p95 por
+endpoint, respostas por faixa de status, endpoints mais lentos e a situação das
+filas Sidekiq. Os dados do Prometheus e do Grafana são preservados nos volumes
+Docker e são removidos com `docker compose down -v`.
 
 ## API JSON
 
