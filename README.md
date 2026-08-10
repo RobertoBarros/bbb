@@ -6,19 +6,27 @@ eleição.
 
 ## Rodando com Docker
 
+O arquivo `config/master.key` não é versionado por segurança. Se
+`RAILS_MASTER_KEY` não for informada, o contêiner cria uma chave local na
+primeira execução e a guarda no volume Docker. Ela é reutilizada nas próximas
+execuções; nenhum arquivo de chave é criado no repositório. Nesse modo, as
+credenciais criptografadas compartilhadas não são usadas. Para usá-las, forneça
+a chave original em `RAILS_MASTER_KEY`.
+
 Com o Docker instalado, execute na raiz do projeto:
 
 ```sh
-RAILS_MASTER_KEY="$(cat config/master.key)" docker compose up --build
+docker compose up --build
 ```
 
 Abra [http://localhost:3000](http://localhost:3000). O comando inicia a
 aplicação, o processador de votos e o Redis, sem precisar instalar Ruby.
 
-Para carregar os dados iniciais:
+Para apagar todos os dados, resetar o banco e carregar novamente os dados
+iniciais:
 
 ```sh
-RAILS_MASTER_KEY="$(cat config/master.key)" docker compose run --rm web bin/rails db:seed
+docker compose run --rm -e DISABLE_DATABASE_ENVIRONMENT_CHECK=1 web bin/rails db:reset
 ```
 
 ## Arquitetura

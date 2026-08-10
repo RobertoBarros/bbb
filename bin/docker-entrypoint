@@ -1,5 +1,37 @@
 #!/bin/bash -e
 
+secrets_dir="storage/.docker-secrets"
+use_local_secrets=false
+
+if [ -z "${RAILS_MASTER_KEY:-}" ]; then
+  use_local_secrets=true
+  if [ -f "$secrets_dir/master.key" ]; then
+    RAILS_MASTER_KEY="$(<"$secrets_dir/master.key")"
+  else
+    mkdir -p "$secrets_dir"
+    umask 077
+    RAILS_MASTER_KEY="$(ruby -rsecurerandom -e 'puts SecureRandom.hex(16)')"
+    printf '%s\n' "$RAILS_MASTER_KEY" > "$secrets_dir/master.key"
+  fi
+  export RAILS_MASTER_KEY
+fi
+
+if [ "$use_local_secrets" = true ]; then
+  rm -f config/credentials.yml.enc
+fi
+
+if [ -z "${SECRET_KEY_BASE:-}" ]; then
+  if [ -f "$secrets_dir/secret_key_base" ]; then
+    SECRET_KEY_BASE="$(<"$secrets_dir/secret_key_base")"
+  else
+    mkdir -p "$secrets_dir"
+    umask 077
+    SECRET_KEY_BASE="$(ruby -rsecurerandom -e 'puts SecureRandom.hex(64)')"
+    printf '%s\n' "$SECRET_KEY_BASE" > "$secrets_dir/secret_key_base"
+  fi
+  export SECRET_KEY_BASE
+fi
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   ./bin/rails db:prepare

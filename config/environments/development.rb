@@ -1,6 +1,9 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  # Allow Prometheus to scrape Rails through each developer's local hostname.
+  config.hosts << /.*\.local/
+
   if ENV.fetch("WEB_CONCURRENCY", "1") != "1"
     require "cgi"
     require "prometheus/client/data_stores/direct_file_store"
