@@ -87,6 +87,8 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     get results_election_url(election)
 
     assert_response :success
+    assert_select "[data-controller='results-refresh']", count: 1
+    assert_select "[data-results-refresh-target='status'][hidden]", text: "Atualizando resultados…", count: 1
     assert_select "h1", count: 1
     assert_select "[data-election-status]", count: 1
     assert_select "[data-total-votes]", count: 1

@@ -1,7 +1,10 @@
 <% content_for :title, "Resultados: #{@election.title}" %>
 
-<div class="w-full pb-20">
+<div class="w-full pb-20" data-controller="results-refresh">
   <%= link_to "Voltar para a página inicial", root_path, class: "inline-flex text-sm font-semibold text-smart-blue-500 underline decoration-smart-blue-500/30 underline-offset-4 transition duration-200 hover:text-sapphire-500 hover:decoration-sapphire-500" %>
+  <p class="pointer-events-none fixed right-5 top-5 z-50 rounded-md border border-lavender-grey-800 bg-white px-3 py-2 text-xs font-medium text-blue-slate-500 shadow-sm" role="status" aria-live="polite" data-results-refresh-target="status" hidden>
+    Atualizando resultados…
+  </p>
 
   <% if notice %>
     <div class="mt-8 border-y border-smart-blue-500 bg-smart-blue-900 px-4 py-4 font-medium text-prussian-blue-dark" role="status" data-flash="notice">
