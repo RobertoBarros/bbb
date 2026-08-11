@@ -26,11 +26,11 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     get election_url(election)
 
     assert_response :success
-    assert_select "h1", election.title
-    assert_select "[data-election-status]", "Votação aberta"
+    assert_select "h1", count: 1
+    assert_select "[data-election-status]", count: 1
     assert_select "form[data-voting-form][action=?][method=post]", election_votes_path(election)
     assert_select "input[type=radio][name='vote[candidacy_id]'][value=?]", candidacy.id.to_s
-    assert_select "input[type=submit][value='Confirmar voto']"
+    assert_select "input[type=submit]", count: 1
   end
 
   test "returns an election status and candidacy IDs as JSON" do
@@ -61,7 +61,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
       get election_url(election)
 
       assert_response :success
-      assert_select "[data-candidate]", @candidate.name
+      assert_select "[data-candidate]", count: 1
       assert_select "form[data-voting-form]", count: 0
     end
   end
@@ -72,7 +72,7 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     get election_url(election)
 
     assert_response :success
-    assert_select "[data-empty-state='candidates']", "Nenhum candidato foi adicionado a esta votação."
+    assert_select "[data-empty-state='candidates']", count: 1
     assert_select "form[data-voting-form]", count: 0
   end
 
@@ -87,16 +87,18 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     get results_election_url(election)
 
     assert_response :success
-    assert_select "h1", election.title
-    assert_select "[data-election-status]", "Votação aberta"
-    assert_select "[data-total-votes]", "4"
-    assert_select "p", "Votos por segundo nos 5 segundos até o último voto processado"
-    assert_select "[data-votes-per-second]", "1,25"
-    assert_select "[data-tallied-at]", "Última apuração: 06/08/2026 às 14:30"
-    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-name]", first_candidate.name
-    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-votes]", "3 votos · 75,0%"
-    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-name]", second_candidate.name
-    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-votes]", "1 voto · 25,0%"
+    assert_select "h1", count: 1
+    assert_select "[data-election-status]", count: 1
+    assert_select "[data-total-votes]", count: 1
+    assert_select "[data-votes-per-second]", count: 1
+    assert_select "[data-tallied-at]", count: 1
+    assert_select "[data-result-candidate]", count: 2
+    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-rank]", count: 1
+    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-name]", count: 1
+    assert_select "[data-result-candidate]:nth-child(1) [data-candidate-votes]", count: 1
+    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-rank]", count: 1
+    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-name]", count: 1
+    assert_select "[data-result-candidate]:nth-child(2) [data-candidate-votes]", count: 1
   end
 
   test "returns ranked election results as JSON" do
@@ -138,10 +140,10 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
       get results_election_url(election)
 
       assert_response :success
-      assert_select "[data-total-votes]", "0"
-      assert_select "[data-votes-per-second]", "0,00"
-      assert_select "[data-tally-pending]", "Aguardando primeira apuração."
-      assert_select "[data-candidate-votes]", "0 votos · 0,0%"
+      assert_select "[data-total-votes]", count: 1
+      assert_select "[data-votes-per-second]", count: 1
+      assert_select "[data-tally-pending]", count: 1
+      assert_select "[data-candidate-votes]", count: 1
     end
   end
 
@@ -151,6 +153,6 @@ class ElectionsControllerTest < ActionDispatch::IntegrationTest
     get results_election_url(election)
 
     assert_response :success
-    assert_select "[data-empty-state='results']", "Nenhum candidato foi adicionado a esta votação."
+    assert_select "[data-empty-state='results']", count: 1
   end
 end

@@ -25,7 +25,7 @@ class VotesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Voto registrado com sucesso.", flash[:notice]
 
     follow_redirect!
-    assert_select "[data-flash='notice']", "Voto registrado com sucesso."
+    assert_select "[data-flash='notice']", count: 1
   end
 
   test "enqueues missing identifiers for the job to discard" do

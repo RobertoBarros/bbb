@@ -19,8 +19,14 @@ Com o Docker instalado, execute na raiz do projeto:
 docker compose up --build
 ```
 
-Abra [http://localhost:3000](http://localhost:3000). O comando inicia a
-aplicação, o processador de votos e o Redis, sem precisar instalar Ruby.
+O comando inicia a aplicação, o processador de votos, Redis, Prometheus e
+Grafana, sem precisar instalar Ruby. Depois que os serviços estiverem prontos,
+acesse:
+
+- Aplicação: [http://localhost:3000](http://localhost:3000)
+- Dashboard do Sidekiq: [http://localhost:3000/sidekiq](http://localhost:3000/sidekiq)
+- Prometheus: [http://localhost:9090](http://localhost:9090)
+- Grafana: [http://localhost:3001](http://localhost:3001) — acesso anônimo, somente leitura
 
 Para apagar todos os dados, resetar o banco e carregar novamente os dados
 iniciais:
@@ -92,8 +98,7 @@ erDiagram
 ```
 
 Uma eleição aberta registra `opened_at`; ao encerrar, registra `closed_at`. O
-job só aceita votos submetidos dentro dessa janela e usa o ID do job para evitar
-duplicar uma submissão reprocessada.
+job só aceita votos submetidos dentro dessa janela.
 
 ## Arquitetura da contagem de votos
 
@@ -102,6 +107,10 @@ reconstruível, usada para consultar os resultados sem agrupar todos os votos a
 cada leitura. `Election#tallied_at` informa quando essa projeção foi atualizada
 pela última vez, e `Election#votes_per_second` armazena a média de votos por
 segundo da apuração.
+
+Para manter o processamento idempotente no Sidekiq, o job usa seu ID como
+`submission_id` único: se uma submissão for reprocessada, o mesmo voto não é
+persistido duas vezes.
 
 ```text
 Vote
@@ -134,19 +143,6 @@ submissão, usando uma janela mínima de um segundo.
 - O dashboard do Sidekiq está disponível em `/sidekiq`.
 
 No desenvolvimento, `bin/dev` inicia os processos `web`, `css` e `jobs`.
-
-## Monitoramento com Prometheus e Grafana
-
-O comando `docker compose up --build` também inicia Prometheus e Grafana. O
-Prometheus coleta as métricas do Rails e do Sidekiq apenas pela rede interna do
-Docker e está disponível em [http://localhost:9090](http://localhost:9090).
-O Grafana está em [http://localhost:3001](http://localhost:3001) e pode ser
-acessado sem autenticação, com permissão somente de visualização.
-
-O dashboard provisionado mostra requisições por segundo, latência p95 por
-endpoint, respostas por faixa de status, endpoints mais lentos e a situação das
-filas Sidekiq. Os dados do Prometheus e do Grafana são preservados nos volumes
-Docker e são removidos com `docker compose down -v`.
 
 ## API JSON
 

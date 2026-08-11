@@ -34,8 +34,9 @@
         <p class="mt-2 text-4xl font-semibold tracking-tight text-prussian-blue-dark" data-total-votes><%= @total_votes %></p>
       </div>
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-grey-500">Votos por segundo nos 5 segundos até o último voto processado</p>
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-grey-500">Votos por segundo</p>
         <p class="mt-2 text-4xl font-semibold tracking-tight text-prussian-blue-dark" data-votes-per-second><%= number_with_precision(@election.votes_per_second, precision: 2, separator: ",", delimiter: ".", strip_insignificant_zeros: false) %></p>
+        <p class="mt-1 text-sm text-blue-slate-500">Nos 5 s antes do último voto processado.</p>
       </div>
       <div class="text-sm leading-relaxed text-blue-slate-500">
         <% if @election.tallied_at? %>
