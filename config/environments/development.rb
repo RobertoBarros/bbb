@@ -4,40 +4,6 @@ Rails.application.configure do
   # Allow Prometheus to scrape Rails through each developer's local hostname.
   config.hosts << /.*\.local/
 
-  if ENV.fetch("WEB_CONCURRENCY", "1") != "1"
-    require "cgi"
-    require "prometheus/client/data_stores/direct_file_store"
-    require "uri"
-
-    # prometheus-client 4.2.5 still calls CGI.parse, removed in Ruby 4.0.
-    unless CGI.respond_to?(:parse)
-      CGI.define_singleton_method(:parse) do |query_string|
-        URI.decode_www_form(query_string).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |(key, value), result|
-          result[key] << value
-        end
-      end
-    end
-
-    metrics_directory = Rails.root.join("tmp", "prometheus")
-    Dir.glob(metrics_directory.join("metric_*___*.bin")).each do |file_path|
-      process_id = File.basename(file_path)[/___(\d+)\.bin\z/, 1]
-
-      begin
-        Process.kill(0, process_id.to_i)
-      rescue Errno::ESRCH
-        begin
-          File.delete(file_path)
-        rescue Errno::ENOENT
-          # The file was removed by another worker.
-        end
-      rescue Errno::ENOENT, Errno::EPERM
-        # The file was removed by another worker or belongs to an active process.
-      end
-    end
-
-    Prometheus::Client.config.data_store = Prometheus::Client::DataStores::DirectFileStore.new(dir: metrics_directory)
-  end
-
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Make code changes take effect immediately without server restart.
