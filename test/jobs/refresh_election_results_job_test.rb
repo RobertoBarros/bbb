@@ -29,10 +29,10 @@ class RefreshElectionResultsJobTest < ActiveJob::TestCase
       RefreshElectionResultsJob.perform_now
 
       assert_equal 1, candidacies(:open_maria).reload.votes_count
-      assert_equal 0.2, open_election.reload.votes_per_second
+      assert_equal 0, open_election.reload.votes_per_second
       assert_equal 0, zero_vote_candidacy.reload.votes_count
       assert_equal 1, candidacies(:closed_ana).reload.votes_count
-      assert_equal 0.2, recent_closed_election.reload.votes_per_second
+      assert_equal 0, recent_closed_election.reload.votes_per_second
       assert_equal Time.current, open_election.reload.tallied_at
       assert_equal Time.current, recent_closed_election.reload.tallied_at
       assert_equal 7, pending_candidacy.reload.votes_count
@@ -42,24 +42,24 @@ class RefreshElectionResultsJobTest < ActiveJob::TestCase
     end
   end
 
-  test "calculates votes per second from the five seconds ending at the last processed vote" do
+  test "calculates votes per second from the thirty seconds ending at the tally time" do
     travel_to Time.zone.parse("2026-08-05 14:05:00") do
       election = Election.create!(title: "Votação com taxa", status: :open)
-      election.update_column(:opened_at, 10.seconds.ago)
+      election.update_column(:opened_at, 1.minute.ago)
       candidate = Candidate.create!(name: "Ana")
       candidacy = Candidacy.create!(election:, candidate:)
 
-      [ 6.seconds.ago, 2.seconds.ago, 1.second.ago, Time.current ].each_with_index do |submitted_at, index|
+      [ 31.seconds.ago, 30.seconds.ago, 2.seconds.ago, 1.second.ago, Time.current ].each_with_index do |submitted_at, index|
         Vote.create!(candidacy:, submission_id: "33333333-3333-4333-8333-#{index.to_s.rjust(12, "0")}", submitted_at:)
       end
 
       RefreshElectionResultsJob.perform_now
 
-      assert_equal 0.6, election.reload.votes_per_second
+      assert_equal 0.133333, election.reload.votes_per_second
     end
   end
 
-  test "calculates votes per second when the last processed vote is older than five seconds" do
+  test "stores zero votes per second when the most recent vote is older than thirty seconds" do
     travel_to Time.zone.parse("2026-08-05 14:05:00") do
       election = Election.create!(title: "Votação com atraso", status: :open)
       election.update_column(:opened_at, 2.minutes.ago)
@@ -72,11 +72,11 @@ class RefreshElectionResultsJobTest < ActiveJob::TestCase
 
       RefreshElectionResultsJob.perform_now
 
-      assert_equal 0.4, election.reload.votes_per_second
+      assert_equal 0, election.reload.votes_per_second
     end
   end
 
-  test "uses a five-second window for votes submitted at the same time" do
+  test "uses a thirty-second window for votes submitted at the same time" do
     travel_to Time.zone.parse("2026-08-05 14:05:00") do
       election = Election.create!(title: "Votação simultânea", status: :open)
       candidate = Candidate.create!(name: "Ana")
@@ -88,7 +88,7 @@ class RefreshElectionResultsJobTest < ActiveJob::TestCase
 
       RefreshElectionResultsJob.perform_now
 
-      assert_equal 0.6, election.reload.votes_per_second
+      assert_equal 0.1, election.reload.votes_per_second
     end
   end
 
