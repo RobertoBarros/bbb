@@ -27,7 +27,7 @@ services:
       - "${APP_PORT:-3000}:80"
     healthcheck:
       test: [ "CMD", "curl", "--fail", "http://localhost/up" ]
-      interval: 5s
+      interval: 15s
       timeout: 3s
       retries: 10
 
