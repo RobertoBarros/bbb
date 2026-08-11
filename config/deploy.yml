@@ -42,7 +42,7 @@ env:
     - RAILS_MASTER_KEY
   clear:
     REDIS_URL: redis://bbb-redis:6379/0
-    SIDEKIQ_CONCURRENCY: 5
+    SIDEKIQ_CONCURRENCY: 2
     LOAD_TEST_MODE: <%= ENV.fetch("LOAD_TEST_MODE", "false") %>
 
     # Set number of cores available to the application on each server (default: 1).

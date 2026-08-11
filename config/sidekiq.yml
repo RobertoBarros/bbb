@@ -1,4 +1,4 @@
-:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 3) %>
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 2) %>
 :queues:
   - results
   - votes
