@@ -38,17 +38,10 @@ serviço necessário:
 docker compose run --rm -e RAILS_ENV=test web bin/rails db:test:prepare test
 ```
 
-Para executar apenas um arquivo de teste, informe seu caminho ao Rails:
-
-```sh
-docker compose run --rm -e RAILS_ENV=test web bin/rails db:test:prepare test/models/vote_test.rb
-```
-
 O workflow de CI em [`.github/workflows/ci.yml`](.github/workflows/ci.yml) é
 executado em todo pull request e em cada push para `master`. Ele verifica
 vulnerabilidades Ruby, JavaScript e dependências, executa o RuboCop, os testes
-unitários e de integração, e os testes de sistema. Quando um teste de sistema
-falha, as capturas de tela são disponibilizadas como artefato da execução.
+unitários e de integração, e os testes de sistema.
 
 ## Arquitetura
 
